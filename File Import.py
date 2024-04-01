@@ -132,6 +132,8 @@ for i in range(len(file_dir)):
             if file_list[0].endswith(".csv"):
                 raw_text = pd.read_csv(url)
             raw_text["date"] = raw_text["date"].fillna(0)
+            raw_text = raw_text[raw_text["date"] != 0]
+            raw_text["date"] = raw_text["date"].astype(int)
             raw_text = raw_text.rename(
                 columns={
                     "text": "segment",
@@ -189,6 +191,8 @@ for i in range(len(file_dir)):
                     encoding="UTF-8",
                 )
             raw_text["contents"] = raw_text["contents"].astype(str)
+            raw_text["len"] = len(raw_text["contents"])
+            raw_text = raw_text[raw_text["len"] > 4]
             raw_text = raw_text.rename(
                 columns={
                     "contents": "segment",

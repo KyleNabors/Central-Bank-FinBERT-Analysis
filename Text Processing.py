@@ -8,7 +8,6 @@ import spacy
 nlp = spacy.load("en_core_web_lg")
 
 cwd = os.getcwd()
-
 # Find and import config file
 config_path = os.getcwd()
 
@@ -131,23 +130,24 @@ def text_process(df):
         seglen = len(segment)
         lenlist.append(seglen)
         language, langprob = detect_language_with_langdetect(segment)
-        blocks = get_chunks(segment, 500)
+        blocks = get_chunks(segment, 1000)
         for block in blocks:
             sentences = sent_tokenize(block)
             for sentence in sentences:
-                words = word_tokenize(sentence)
-                segment = " ".join(words)
-                output.append(
-                    {
-                        "date": date,
-                        "group": group,
-                        "segment": segment,
-                        "length": len(segment),
-                        "language": language,
-                        "lang_prob": langprob,
-                        "doc_len": seglen,
-                    }
-                )
+                if 60 < len(sentence) < 512:
+                    words = word_tokenize(sentence)
+                    segment = " ".join(words)
+                    output.append(
+                        {
+                            "date": date,
+                            "group": group,
+                            "segment": segment,
+                            "length": len(segment),
+                            "language": language,
+                            "lang_prob": langprob,
+                            "doc_len": seglen,
+                        }
+                    )
     df = pd.DataFrame(output)
 
     df["segment"] = df["segment"].progress_apply(lambda x: remove_comma(x))
@@ -160,6 +160,9 @@ def text_process(df):
     df.drop("focus_changed", axis=1, inplace=True)
 
     df["len"] = df["sentence_simple"].apply(lambda x: len(x))
+    df["sentence_simple"] = np.where(
+        df["len"] < 10, df["sentence"], df["sentence_simple"]
+    )
     prelen = len(df)
     df = df[df["len"] < 512]
     postlen = len(df)
@@ -169,11 +172,22 @@ def text_process(df):
 
 url_map = pd.read_csv(os.path.join(cwd, "url_map.csv"))
 
+processed_urls = []
 for i in range(len(url_map)):
     tqdm.pandas()
     url = url_map["url"][i]
     df = pd.read_csv(url)
+    print(df.columns)
+    print(df.dtypes)
+    df["date"] = df["date"].astype(str)
+    df["segment"] = df["segment"].astype(str)
     df = df[df["date"] > "1998-01-01"]
+    print(len(df))
     folder = os.path.dirname(url)
     df = text_process(df)
-    df.to_csv(os.path.join(folder, "processed_text.csv"), index=False)
+    processed_url = os.path.join(folder, "processed_text.csv")
+    df.to_csv(processed_url, index=False)
+    processed_urls.append(processed_url)
+
+url_map["processed_url"] = processed_urls
+url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)
