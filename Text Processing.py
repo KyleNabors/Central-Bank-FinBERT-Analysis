@@ -4,6 +4,7 @@ import pandas as pd
 from tqdm.auto import tqdm
 from nltk.tokenize import sent_tokenize, word_tokenize
 import spacy
+import numpy as np
 
 nlp = spacy.load("en_core_web_lg")
 
@@ -161,7 +162,7 @@ def text_process(df):
 
     df["len"] = df["sentence_simple"].apply(lambda x: len(x))
     df["sentence_simple"] = np.where(
-        df["len"] < 10, df["sentence"], df["sentence_simple"]
+        df["len"] < 10, df["segment"], df["sentence_simple"]
     )
     prelen = len(df)
     df = df[df["len"] < 512]
@@ -174,7 +175,6 @@ url_map = pd.read_csv(os.path.join(cwd, "url_map.csv"))
 
 processed_urls = []
 for i in range(len(url_map)):
-    tqdm.pandas()
     url = url_map["url"][i]
     df = pd.read_csv(url)
     print(df.columns)
