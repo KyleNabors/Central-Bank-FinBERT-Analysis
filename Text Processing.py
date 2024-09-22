@@ -151,11 +151,11 @@ def text_process(df):
                     )
     df = pd.DataFrame(output)
 
-    df["segment"] = df["segment"].progress_apply(lambda x: remove_comma(x))
-    df["sentence_simple"] = df["segment"].progress_apply(remove_comma)
+    df["segment"] = df["segment"].apply(lambda x: remove_comma(x))
+    df["sentence_simple"] = df["segment"].apply(remove_comma)
     # Processing sentiment focus
     df[["sentence_simple", "focus_changed"]] = (
-        df["sentence_simple"].progress_apply(sentiment_focus).apply(pd.Series)
+        df["sentence_simple"].apply(sentiment_focus).apply(pd.Series)
     )
 
     df.drop("focus_changed", axis=1, inplace=True)

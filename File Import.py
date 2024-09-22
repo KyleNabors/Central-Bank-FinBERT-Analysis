@@ -81,6 +81,7 @@ for i in range(len(file_dir)):
     file_list = os.listdir(file_dir["filepath"][i])
 
     if file_dir["central bank"][i] == "fed":
+
         if file_dir["document"][i] == "statements":
             url = os.path.join(file_dir["filepath"][i], file_list[0])
             if file_list[0].endswith(".csv"):
@@ -92,6 +93,7 @@ for i in range(len(file_dir)):
                     "Type": "group",
                 }
             )
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y-%m-%d")
 
         if file_dir["document"][i] == "minutes":
             url = os.path.join(file_dir["filepath"][i], file_list[0])
@@ -104,28 +106,34 @@ for i in range(len(file_dir)):
                     "release_date": "date",
                 }
             )
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="mixed")
 
         if file_dir["document"][i] == "beigebooks":
             pdf_out = []
             for file in file_list:
                 url = os.path.join(file_dir["filepath"][i], file)
+                if file.endswith(".DS_Store"):
+                    continue
                 if file.endswith(".pdf"):
                     pdf = PdfReader(url)
+                    file = file.replace(".pdf", "")
                 if "_" in file:
-                    date = file.split("_")[1].split(".")[0]
+                    date = file.split("_")[1]
                 else:
-                    date = file[2:10]
+                    date = date[:10]
                 whole_text = []
                 for j in range(len(pdf.pages)):
                     whole_text.append(pdf.pages[j].extract_text())
+                print(date, url)
                 pdf_out.append(
                     {
                         "date": date,
                         "segment": whole_text,
-                        "group": "date",
+                        "group": date,
                     }
                 )
                 raw_text = pd.DataFrame(pdf_out)
+                raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y%m%d")
 
         if file_dir["document"][i] == "speeches":
             url = os.path.join(file_dir["filepath"][i], file_list[0])
@@ -140,19 +148,23 @@ for i in range(len(file_dir)):
                     "speaker": "group",
                 }
             )
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y%m%d")
 
     if file_dir["central bank"][i] == "ecb":
+
         if file_dir["document"][i] == "economic bulletins":
             pdf_out = []
             for file in file_list:
                 url = os.path.join(file_dir["filepath"][i], file)
                 date = file[2:10]  # Extract the date from the file name
+                if file.endswith(".DS_Store"):
+                    continue
                 if file.endswith(".pdf"):
                     pdf = PdfReader(url)
                     whole_text = []
                     for j in range(len(pdf.pages)):
                         whole_text.append(pdf.pages[j].extract_text())
-
+                print(date, url)
                 pdf_out.append(
                     {
                         "date": date,
@@ -161,6 +173,7 @@ for i in range(len(file_dir)):
                     }
                 )
             raw_text = pd.DataFrame(pdf_out)
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y%m%d")
 
         if file_dir["document"][i] == "monetary policy accounts":
             url = os.path.join(file_dir["filepath"][i], file_list[0])
@@ -181,6 +194,7 @@ for i in range(len(file_dir)):
                     "firstPart": "segment",
                 }
             )
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%y/%m/%d")
 
         if file_dir["document"][i] == "speeches":
             url = os.path.join(file_dir["filepath"][i], file_list[0])
@@ -199,6 +213,8 @@ for i in range(len(file_dir)):
                     "speakers": "group",
                 }
             )
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y-%m-%d")
+
     raw_text = raw_text[["date", "group", "segment"]]
     raw_text.to_csv(
         os.path.join(
