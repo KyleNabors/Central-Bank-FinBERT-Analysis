@@ -20,6 +20,7 @@ central_banks = config.central_banks
 training_data = os.path.join(database, "Training Data")
 fed_docs = config.fed_docs
 ecb_docs = config.ecb_docs
+boe_docs = config.boe_docs
 
 
 def get_chunks(s, maxlength):

@@ -4,18 +4,23 @@ import sys
 
 database = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "Database"))
 print(database)
-central_banks = ["fed", "ecb"]
+central_banks = ["fed", "ecb", "boe"]
 
 fed_docs = [
-    "statements",
-    "minutes",
+    "fed_statements",
+    "fed_minutes",
     "beigebooks",
-    "speeches",
+    "fed_speeches",
 ]
 
 ecb_docs = [
-    "economic bulletins",
-    "monetary policy accounts",
-    "press conferences",
-    "speeches",
+    "economic_bulletins",
+    "monetary_policy_accounts",
+    "press_conferences",
+    "ecb_speeches",
+]
+
+boe_docs = [
+    "boe_minutes",
+    "boe_speeches",
 ]

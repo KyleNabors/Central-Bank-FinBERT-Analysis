@@ -1,9 +1,10 @@
-central bank,document,url,processed_url,finbert_url
-fed,statements,/Users/kylenabors/Documents/Database/Processed Text/fed/statements/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/statements/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/statements/finbert.csv
-fed,minutes,/Users/kylenabors/Documents/Database/Processed Text/fed/minutes/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/minutes/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/minutes/finbert.csv
-fed,beigebooks,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/beigebooks/finbert.csv
-fed,fed_speeches,/Users/kylenabors/Documents/Database/Processed Text/fed/speeches/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/speeches/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/speeches/finbert.csv
-ecb,economic bulletins,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic bulletins/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic bulletins/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/economic bulletins/finbert.csv
-ecb,monetary policy accounts,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary policy accounts/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary policy accounts/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/monetary policy accounts/finbert.csv
-ecb,press conferences,/Users/kylenabors/Documents/Database/Processed Text/ecb/press conferences/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/press conferences/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/press conferences/finbert.csv
-ecb,ecb_speeches,/Users/kylenabors/Documents/Database/Processed Text/ecb/speeches/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/speeches/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/speeches/finbert.csv
+central bank,document,url
+fed,fed_statements,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_statements/raw_text.csv
+fed,fed_minutes,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_minutes/raw_text.csv
+fed,beigebooks,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/raw_text.csv
+fed,fed_speeches,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_speeches/raw_text.csv
+ecb,economic_bulletins,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic_bulletins/raw_text.csv
+ecb,monetary_policy_accounts,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary_policy_accounts/raw_text.csv
+ecb,press_conferences,/Users/kylenabors/Documents/Database/Processed Text/ecb/press_conferences/raw_text.csv
+ecb,ecb_speeches,/Users/kylenabors/Documents/Database/Processed Text/ecb/ecb_speeches/raw_text.csv
+boe,boe_minutes,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_minutes/raw_text.csv
