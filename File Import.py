@@ -83,6 +83,8 @@ for i in central_banks:
             doc_list = os.path.join(boe_training_data, j)
             if j == "boe_minutes":
                 doc_type = "CSV"
+            if j == "boe_speeches":
+                doc_type = "CSV"
             # You can add more document types here if needed
             file_dir = pd.concat(
                 [
@@ -104,6 +106,20 @@ for i in range(len(file_dir)):
     file_list = os.listdir(file_dir["filepath"][i])
 
     if file_dir["central bank"][i] == "boe":
+        if file_dir["document"][i] == "speeches":
+            # Assuming you have BoE_Speeches.csv in the filepath
+            for file in file_list:
+                url = os.path.join(file_dir["filepath"][i], file)
+                if file.endswith(".csv"):
+                    raw_text = pd.read_csv(url)
+                    raw_text["date"] = pd.to_datetime(
+                        raw_text["date"], format="%Y-%m-%d"
+                    )
+                    raw_text["segment"] = raw_text["segment"].astype(str)
+                    raw_text["group"] = raw_text["group"].astype(str)
+                    raw_text["date"] = pd.to_datetime(
+                        raw_text["date"], format="%Y-%m-%d"
+                    )
         # Process BoE documents
         if file_dir["document"][i] == "minutes":
             # Assuming there's only one CSV file for BoE minutes
