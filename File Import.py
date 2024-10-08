@@ -77,15 +77,15 @@ for i in central_banks:
                 ignore_index=True,
             )
 
-    if i == "boe":  # Add BoE processing
+    if i == "boe":
         boe_training_data = os.path.join(training_data, "boe")
         for j in boe_docs:
             doc_list = os.path.join(boe_training_data, j)
+
             if j == "boe_minutes":
                 doc_type = "CSV"
             if j == "boe_speeches":
                 doc_type = "CSV"
-            # You can add more document types here if needed
             file_dir = pd.concat(
                 [
                     file_dir,
@@ -105,51 +105,35 @@ for i in range(len(file_dir)):
     # Get list of files in filepath folder
     file_list = os.listdir(file_dir["filepath"][i])
 
+    # print(file_list)
     if file_dir["central bank"][i] == "boe":
-        if file_dir["document"][i] == "speeches":
-            # Assuming you have BoE_Speeches.csv in the filepath
-            for file in file_list:
-                url = os.path.join(file_dir["filepath"][i], file)
-                if file.endswith(".csv"):
-                    raw_text = pd.read_csv(url)
-                    raw_text["date"] = pd.to_datetime(
-                        raw_text["date"], format="%Y-%m-%d"
-                    )
-                    raw_text["segment"] = raw_text["segment"].astype(str)
-                    raw_text["group"] = raw_text["group"].astype(str)
-                    raw_text["date"] = pd.to_datetime(
-                        raw_text["date"], format="%Y-%m-%d"
-                    )
-        # Process BoE documents
-        if file_dir["document"][i] == "minutes":
-            # Assuming there's only one CSV file for BoE minutes
-            for file_name in file_list:
-                url = os.path.join(file_dir["filepath"][i], file_name)
-                if file_name.endswith(".csv"):
-                    raw_text = pd.read_csv(url)
-                    # Process the BoE minutes data
-                    # Rename columns to standardize with other data
-                    raw_text = raw_text.rename(
-                        columns={
-                            "date": "date",
-                            "text": "segment",
-                            # Add 'group' column if needed
-                        }
-                    )
-                    raw_text["date"] = pd.to_datetime(
-                        raw_text["date"], format="%Y-%m-%d"
-                    )
-                    # If 'group' column is not present, you can create one
-                    if "group" not in raw_text.columns:
-                        raw_text["group"] = "minutes"  # or any other grouping logic
-        print("BoE minutes processed")
+
+        if file_dir["document"][i] == "boe_speeches":
+            for j in file_list:
+                if j.endswith(".csv"):
+                    url = os.path.join(file_dir["filepath"][i], j)
+            raw_text = pd.read_csv(url)
+
+        if file_dir["document"][i] == "boe_minutes":
+            for j in file_list:
+                if j.endswith(".csv"):
+                    url = os.path.join(file_dir["filepath"][i], j)
+            raw_text = pd.read_csv(url)
+            raw_text = raw_text.rename(
+                columns={
+                    "date": "date",
+                    "text": "segment",
+                }
+            )
+            raw_text["group"] = "boe_minutes"
 
     if file_dir["central bank"][i] == "fed":
 
         if file_dir["document"][i] == "fed_statements":
-            url = os.path.join(file_dir["filepath"][i], file_list[0])
-            if file_list[0].endswith(".csv"):
-                raw_text = pd.read_csv(url)
+            for j in file_list:
+                if j.endswith(".csv"):
+                    url = os.path.join(file_dir["filepath"][i], file_list[0])
+
             raw_text = raw_text.rename(
                 columns={
                     "Date": "date",
@@ -160,9 +144,9 @@ for i in range(len(file_dir)):
             raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y-%m-%d")
 
         if file_dir["document"][i] == "fed_minutes":
-            url = os.path.join(file_dir["filepath"][i], file_list[0])
-            if file_list[0].endswith(".csv"):
-                raw_text = pd.read_csv(url)
+            for j in file_list:
+                if j.endswith(".csv"):
+                    url = os.path.join(file_dir["filepath"][i], file_list[0])
             raw_text = raw_text.rename(
                 columns={
                     "document_kind": "group",
@@ -279,7 +263,11 @@ for i in range(len(file_dir)):
             )
             raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y-%m-%d")
 
-    raw_text = raw_text[["date", "group", "segment"]]
+    try:
+        raw_text = raw_text[["date", "group", "segment"]]
+    except:
+        print("Error: ", file_dir["central bank"][i], file_dir["document"][i])
+        continue
     raw_text.to_csv(
         os.path.join(
             database,
@@ -307,4 +295,5 @@ for i in range(len(file_dir)):
 
 url_map = pd.DataFrame(url_map)
 url_map.to_csv(config_path + "/url_map.csv", index=False)
+
 print(url_map)
