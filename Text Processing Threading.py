@@ -3,13 +3,16 @@ import sys
 import pandas as pd
 from tqdm.auto import tqdm
 from nltk.tokenize import sent_tokenize, word_tokenize
-import spacy
-from concurrent.futures import ThreadPoolExecutor
+import numpy as np
+from multiprocessing import Pool, cpu_count
 
-nlp = spacy.load("en_core_web_lg")
+# Other imports
+import spacy
+from langdetect import detect_langs
+
+# Define global variables and functions here
 
 cwd = os.getcwd()
-
 # Find and import config file
 config_path = os.getcwd()
 
@@ -21,6 +24,7 @@ central_banks = config.central_banks
 training_data = os.path.join(database, "Training Data")
 fed_docs = config.fed_docs
 ecb_docs = config.ecb_docs
+boe_docs = config.boe_docs
 
 
 def get_chunks(s, maxlength):
@@ -34,19 +38,23 @@ def get_chunks(s, maxlength):
 
 
 def detect_language_with_langdetect(line):
-    from langdetect import detect_langs
-
     try:
         langs = detect_langs(line)
         for item in langs:
             # The first one returned is usually the one that has the highest probability
-
             return item.lang, item.prob
     except:
         return "err", 0.0
 
 
+# Initialize spaCy in each worker process
+def init_worker():
+    global nlp
+    nlp = spacy.load("en_core_web_lg")
+
+
 def remove_comma(sentence):
+    global nlp
     doc = nlp(sentence)
     indices = []
     for i, token in enumerate(doc):
@@ -64,13 +72,13 @@ def remove_comma(sentence):
         last_idx = 0
         for idx in indices:
             parts.append(doc[last_idx:idx].text.strip())
-
             last_idx = idx + 1
         parts.append(doc[last_idx:].text.strip())
         return " ".join(parts)
 
 
 def sentiment_focus(sentence):
+    global nlp
     doc = nlp(sentence)
     focus = ""
     focus_changed = 1
@@ -118,72 +126,91 @@ def sentiment_focus(sentence):
     return str(doc).strip(), focus_changed
 
 
-def process_text(df_row):
-    index, row = df_row
-    date = row["date"]
-    group = row["group"]
-    segment = row["segment"]
-    segment = segment.replace("\n", " ")
-    segment = segment.replace("\r", " ")
-    segment = segment.replace("\t", " ")
-    segment = segment.replace("  ", " ")
-    seglen = len(segment)
-    language, langprob = detect_language_with_langdetect(segment)
+def process_chunk(df_chunk):
     output = []
-    blocks = get_chunks(segment, 1000)
-    for block in blocks:
-        sentences = sent_tokenize(block)
-        for sentence in sentences:
-            words = word_tokenize(sentence)
-            segment = " ".join(words)
-            output.append(
-                {
-                    "date": date,
-                    "group": group,
-                    "segment": segment,
-                    "length": len(segment),
-                    "language": language,
-                    "lang_prob": langprob,
-                    "doc_len": seglen,
-                }
-            )
-    return output
+    lenlist = []
+    for i in range(len(df_chunk)):
+        date = df_chunk["date"].iloc[i]
+        group = df_chunk["group"].iloc[i]
+        segment = df_chunk["segment"].iloc[i]
+        segment = segment.replace("\n", " ")
+        segment = segment.replace("\r", " ")
+        segment = segment.replace("\t", " ")
+        segment = segment.replace("  ", " ")
+        seglen = len(segment)
+        lenlist.append(seglen)
+        language, langprob = detect_language_with_langdetect(segment)
+        blocks = get_chunks(segment, 1000)
+        for block in blocks:
+            sentences = sent_tokenize(block)
+            for sentence in sentences:
+                if 60 < len(sentence) < 512:
+                    words = word_tokenize(sentence)
+                    segment = " ".join(words)
+                    output.append(
+                        {
+                            "date": date,
+                            "group": group,
+                            "segment": segment,
+                            "length": len(segment),
+                            "language": language,
+                            "lang_prob": langprob,
+                            "doc_len": seglen,
+                        }
+                    )
+    df_result = pd.DataFrame(output)
+
+    df_result["segment"] = df_result["segment"].apply(remove_comma)
+    df_result["sentence_simple"] = df_result["segment"].apply(remove_comma)
+    # Processing sentiment focus
+    df_result[["sentence_simple", "focus_changed"]] = (
+        df_result["sentence_simple"].apply(sentiment_focus).apply(pd.Series)
+    )
+
+    df_result.drop("focus_changed", axis=1, inplace=True)
+
+    df_result["len"] = df_result["sentence_simple"].apply(lambda x: len(x))
+    df_result["sentence_simple"] = np.where(
+        df_result["len"] < 10, df_result["segment"], df_result["sentence_simple"]
+    )
+    prelen = len(df_result)
+    df_result = df_result[df_result["len"] < 512]
+    postlen = len(df_result)
+    print(f"Removed {prelen - postlen} sentences with length > 512")
+
+    return df_result
 
 
 def text_process(df):
-    output = []
-    lenlist = []
-    with ThreadPoolExecutor() as executor:
-        results = list(tqdm(executor.map(process_text, df.iterrows()), total=len(df)))
-        for res in results:
-            output.extend(res)
+    num_processes = cpu_count()
+    chunks = np.array_split(df, num_processes)
 
-    df = pd.DataFrame(output)
+    with Pool(processes=num_processes, initializer=init_worker) as pool:
+        results = pool.map(process_chunk, chunks)
 
-    df["segment"] = df["segment"].progress_apply(lambda x: remove_comma(x))
-    df["sentence_simple"] = df["segment"].progress_apply(remove_comma)
-    # Processing sentiment focus
-    df[["sentence_simple", "focus_changed"]] = (
-        df["sentence_simple"].progress_apply(sentiment_focus).apply(pd.Series)
-    )
-
-    df.drop("focus_changed", axis=1, inplace=True)
-
-    df["len"] = df["sentence_simple"].apply(lambda x: len(x))
-    prelen = len(df)
-    df = df[df["len"] < 512]
-    postlen = len(df)
-    print(f"Removed {prelen - postlen} sentences with length > 512")
-    return df
+    df_result = pd.concat(results, ignore_index=True)
+    return df_result
 
 
-url_map = pd.read_csv(os.path.join(cwd, "url_map.csv"))
+if __name__ == "__main__":
+    # Main code that uses multiprocessing should go here
+    url_map = pd.read_csv(os.path.join(cwd, "url_map.csv"))
 
-for i in range(len(url_map)):
-    tqdm.pandas()
-    url = url_map["url"][i]
-    df = pd.read_csv(url)
-    df = df[df["date"] > "1998-01-01"]
-    folder = os.path.dirname(url)
-    df = text_process(df)
-    df.to_csv(os.path.join(folder, "processed_text.csv"), index=False)
+    processed_urls = []
+    for i in range(len(url_map)):
+        url = url_map["url"][i]
+        df = pd.read_csv(url)
+        print(df.columns)
+        print(df.dtypes)
+        df["date"] = df["date"].astype(str)
+        df["segment"] = df["segment"].astype(str)
+        df = df[df["date"] > "1998-01-01"]
+        print(len(df))
+        folder = os.path.dirname(url)
+        df = text_process(df)
+        processed_url = os.path.join(folder, "processed_text.csv")
+        df.to_csv(processed_url, index=False)
+        processed_urls.append(processed_url)
+
+    url_map["processed_url"] = processed_urls
+    url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)

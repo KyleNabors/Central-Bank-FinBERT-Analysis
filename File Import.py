@@ -27,7 +27,6 @@ file_dir = pd.DataFrame(columns=["central bank", "document", "type", "filepath"]
 
 csv_filepaths = []
 
-url_map = []
 
 for i in central_banks:
     if i == "fed":
@@ -133,7 +132,7 @@ for i in range(len(file_dir)):
             for j in file_list:
                 if j.endswith(".csv"):
                     url = os.path.join(file_dir["filepath"][i], file_list[0])
-
+            raw_text = pd.read_csv(url)
             raw_text = raw_text.rename(
                 columns={
                     "Date": "date",
@@ -147,6 +146,7 @@ for i in range(len(file_dir)):
             for j in file_list:
                 if j.endswith(".csv"):
                     url = os.path.join(file_dir["filepath"][i], file_list[0])
+            raw_text = pd.read_csv(url)
             raw_text = raw_text.rename(
                 columns={
                     "document_kind": "group",
@@ -232,9 +232,9 @@ for i in range(len(file_dir)):
             raw_text = raw_text.rename(columns={"title": "group"})
 
         if file_dir["document"][i] == "press_conferences":
-            url = os.path.join(file_dir["filepath"][i], file_list[0])
-            if file_list[0].endswith(".csv"):
-                raw_text = pd.read_csv(url)
+            # url = os.path.join(file_dir["filepath"][i], file_list[0])
+            url = "/Users/kylenabors/Documents/Database/Training Data/ecb/press_conferences/Press Conferences.xlsx"
+            raw_text = pd.read_excel(url)
             raw_text = raw_text.rename(
                 columns={
                     "Date": "date",

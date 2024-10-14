@@ -1,3 +1,10 @@
 central bank,document,url
+fed,fed_statements,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_statements/raw_text.csv
+fed,fed_minutes,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_minutes/raw_text.csv
+fed,beigebooks,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/raw_text.csv
+fed,fed_speeches,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_speeches/raw_text.csv
+ecb,economic_bulletins,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic_bulletins/raw_text.csv
+ecb,monetary_policy_accounts,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary_policy_accounts/raw_text.csv
+ecb,ecb_speeches,/Users/kylenabors/Documents/Database/Processed Text/ecb/ecb_speeches/raw_text.csv
 boe,boe_minutes,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_minutes/raw_text.csv
 boe,boe_speeches,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_speeches/raw_text.csv
