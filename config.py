@@ -6,7 +6,7 @@ database = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "Dat
 print(database)
 
 
-central_banks = ["fed", "ecb", "boe"]
+central_banks = ["fed", "ecb", "boe", "boj"]
 
 
 fed_docs = [
@@ -26,4 +26,9 @@ ecb_docs = [
 boe_docs = [
     "boe_minutes",
     "boe_speeches",
+]
+
+boj_docs = [
+    "boj_minutes",
+    "boj_speeches",
 ]

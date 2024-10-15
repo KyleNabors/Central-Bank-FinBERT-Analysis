@@ -1,10 +1,13 @@
-central bank,document,url
-fed,fed_statements,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_statements/raw_text.csv
-fed,fed_minutes,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_minutes/raw_text.csv
-fed,beigebooks,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/raw_text.csv
-fed,fed_speeches,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_speeches/raw_text.csv
-ecb,economic_bulletins,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic_bulletins/raw_text.csv
-ecb,monetary_policy_accounts,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary_policy_accounts/raw_text.csv
-ecb,ecb_speeches,/Users/kylenabors/Documents/Database/Processed Text/ecb/ecb_speeches/raw_text.csv
-boe,boe_minutes,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_minutes/raw_text.csv
-boe,boe_speeches,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_speeches/raw_text.csv
+central bank,document,url,processed_url,finbert_url
+fed,fed_statements,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_statements/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_statements/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/fed_statements/finbert.csv
+fed,fed_minutes,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_minutes/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_minutes/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/fed_minutes/finbert.csv
+fed,beigebooks,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/beigebooks/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/beigebooks/finbert.csv
+fed,fed_speeches,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_speeches/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/fed/fed_speeches/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/fed/fed_speeches/finbert.csv
+ecb,economic_bulletins,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic_bulletins/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/economic_bulletins/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/economic_bulletins/finbert.csv
+ecb,monetary_policy_accounts,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary_policy_accounts/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/monetary_policy_accounts/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/monetary_policy_accounts/finbert.csv
+ecb,press_conferences,/Users/kylenabors/Documents/Database/Processed Text/ecb/press_conferences/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/press_conferences/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/press_conferences/finbert.csv
+ecb,ecb_speeches,/Users/kylenabors/Documents/Database/Processed Text/ecb/ecb_speeches/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/ecb/ecb_speeches/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/ecb/ecb_speeches/finbert.csv
+boe,boe_minutes,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_minutes/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_minutes/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/boe/boe_minutes/finbert.csv
+boe,boe_speeches,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_speeches/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/boe/boe_speeches/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/boe/boe_speeches/finbert.csv
+boj,boj_minutes,/Users/kylenabors/Documents/Database/Processed Text/boj/boj_minutes/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/boj/boj_minutes/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/boj/boj_minutes/finbert.csv
+boj,boj_speeches,/Users/kylenabors/Documents/Database/Processed Text/boj/boj_speeches/raw_text.csv,/Users/kylenabors/Documents/Database/Processed Text/boj/boj_speeches/processed_text.csv,/Users/kylenabors/Documents/Database/FinBERT Models/boj/boj_speeches/finbert.csv

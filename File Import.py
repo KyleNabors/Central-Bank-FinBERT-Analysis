@@ -19,6 +19,7 @@ training_data = os.path.join(database, "Training Data")
 fed_docs = config.fed_docs
 ecb_docs = config.ecb_docs
 boe_docs = config.boe_docs
+boj_docs = config.boj_docs  # Added BOJ documents
 
 # Get content of training data
 training_data_files = os.listdir(training_data)
@@ -27,6 +28,7 @@ file_dir = pd.DataFrame(columns=["central bank", "document", "type", "filepath"]
 
 csv_filepaths = []
 
+url_map = []
 
 for i in central_banks:
     if i == "fed":
@@ -51,7 +53,7 @@ for i in central_banks:
                 ],
                 ignore_index=True,
             )
-    if i == "ecb":
+    elif i == "ecb":
         ecb_training_data = os.path.join(training_data, "ecb")
         for j in ecb_docs:
             doc_list = os.path.join(ecb_training_data, j)
@@ -75,8 +77,7 @@ for i in central_banks:
                 ],
                 ignore_index=True,
             )
-
-    if i == "boe":
+    elif i == "boe":
         boe_training_data = os.path.join(training_data, "boe")
         for j in boe_docs:
             doc_list = os.path.join(boe_training_data, j)
@@ -99,11 +100,35 @@ for i in central_banks:
                 ],
                 ignore_index=True,
             )
+    elif i == "boj":  # Added BOJ processing
+        boj_training_data = os.path.join(training_data, "boj")
+        for j in boj_docs:
+            doc_list = os.path.join(boj_training_data, j)
+            if j == "boj_minutes":
+                doc_type = "CSV"
+            if j == "boj_speeches":
+                doc_type = "CSV"
+            file_dir = pd.concat(
+                [
+                    file_dir,
+                    pd.DataFrame(
+                        {
+                            "central bank": [i],
+                            "document": [j],
+                            "type": [doc_type],
+                            "filepath": [doc_list],
+                        }
+                    ),
+                ],
+                ignore_index=True,
+            )
 
 for i in range(len(file_dir)):
+    raw_text = None
     # Get list of files in filepath folder
-    file_list = os.listdir(file_dir["filepath"][i])
-
+    file_list = [
+        f for f in os.listdir(file_dir["filepath"][i]) if not f.startswith(".")
+    ]
     # print(file_list)
     if file_dir["central bank"][i] == "boe":
 
@@ -126,7 +151,7 @@ for i in range(len(file_dir)):
             )
             raw_text["group"] = "boe_minutes"
 
-    if file_dir["central bank"][i] == "fed":
+    elif file_dir["central bank"][i] == "fed":
 
         if file_dir["document"][i] == "fed_statements":
             for j in file_list:
@@ -172,7 +197,6 @@ for i in range(len(file_dir)):
                 whole_text = []
                 for j in range(len(pdf.pages)):
                     whole_text.append(pdf.pages[j].extract_text())
-                print(date, url)
                 pdf_out.append(
                     {
                         "date": date,
@@ -180,8 +204,8 @@ for i in range(len(file_dir)):
                         "group": date,
                     }
                 )
-                raw_text = pd.DataFrame(pdf_out)
-                raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y%m%d")
+            raw_text = pd.DataFrame(pdf_out)
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y%m%d")
 
         if file_dir["document"][i] == "fed_speeches":
             url = os.path.join(file_dir["filepath"][i], file_list[0])
@@ -198,7 +222,7 @@ for i in range(len(file_dir)):
             )
             raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y%m%d")
 
-    if file_dir["central bank"][i] == "ecb":
+    elif file_dir["central bank"][i] == "ecb":
 
         if file_dir["document"][i] == "economic_bulletins":
             pdf_out = []
@@ -212,7 +236,6 @@ for i in range(len(file_dir)):
                     whole_text = []
                     for j in range(len(pdf.pages)):
                         whole_text.append(pdf.pages[j].extract_text())
-                print(date, url)
                 pdf_out.append(
                     {
                         "date": date,
@@ -232,16 +255,16 @@ for i in range(len(file_dir)):
             raw_text = raw_text.rename(columns={"title": "group"})
 
         if file_dir["document"][i] == "press_conferences":
-            # url = os.path.join(file_dir["filepath"][i], file_list[0])
-            url = "/Users/kylenabors/Documents/Database/Training Data/ecb/press_conferences/Press Conferences.xlsx"
+            url = os.path.join(file_dir["filepath"][i], file_list[0])
             raw_text = pd.read_excel(url)
             raw_text = raw_text.rename(
                 columns={
                     "Date": "date",
-                    "Title": "group",
+                    "president": "group",
                     "firstPart": "segment",
                 }
             )
+            print(raw_text)
             raw_text["date"] = pd.to_datetime(raw_text["date"], format="%y/%m/%d")
 
         if file_dir["document"][i] == "ecb_speeches":
@@ -253,7 +276,7 @@ for i in range(len(file_dir)):
                     encoding="UTF-8",
                 )
             raw_text["contents"] = raw_text["contents"].astype(str)
-            raw_text["len"] = len(raw_text["contents"])
+            raw_text["len"] = raw_text["contents"].str.len()
             raw_text = raw_text[raw_text["len"] > 4]
             raw_text = raw_text.rename(
                 columns={
@@ -263,17 +286,55 @@ for i in range(len(file_dir)):
             )
             raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y-%m-%d")
 
-    try:
-        raw_text = raw_text[["date", "group", "segment"]]
-    except:
-        print("Error: ", file_dir["central bank"][i], file_dir["document"][i])
-        continue
+    elif file_dir["central bank"][i] == "boj":  # Added BOJ processing
+
+        if file_dir["document"][i] == "boj_speeches":
+            for j in file_list:
+                if j.endswith(".csv"):
+                    url = os.path.join(file_dir["filepath"][i], j)
+            raw_text = pd.read_csv(url)
+            raw_text = raw_text.rename(
+                columns={
+                    "text": "segment",
+                    "speaker": "group",
+                }
+            )
+            # Update the date parsing format
+            raw_text["date"] = pd.to_datetime(
+                raw_text["date"], format="mixed", dayfirst=False
+            )
+
+        if file_dir["document"][i] == "boj_minutes":
+            for j in file_list:
+                if j.endswith(".csv"):
+                    url = os.path.join(file_dir["filepath"][i], j)
+            raw_text = pd.read_csv(url)
+            # Adjust columns as per your data
+            # For example, if columns are 'date' and 'text':
+            raw_text = raw_text.rename(
+                columns={
+                    "text": "segment",
+                }
+            )
+            raw_text["group"] = "boj_minutes"
+            raw_text["date"] = pd.to_datetime(raw_text["date"], format="%Y-%m-%d")
+
+    # Ensure 'raw_text' has the required columns
+    raw_text = raw_text[["date", "group", "segment"]]
+
+    # Save the processed data to CSV
+    output_dir = os.path.join(
+        database,
+        "Processed Text",
+        file_dir["central bank"][i],
+        file_dir["document"][i],
+    )
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
     raw_text.to_csv(
         os.path.join(
-            database,
-            "Processed Text",
-            file_dir["central bank"][i],
-            file_dir["document"][i],
+            output_dir,
             "raw_text.csv",
         ),
         index=False,
@@ -284,16 +345,13 @@ for i in range(len(file_dir)):
             "central bank": file_dir["central bank"][i],
             "document": file_dir["document"][i],
             "url": os.path.join(
-                database,
-                "Processed Text",
-                file_dir["central bank"][i],
-                file_dir["document"][i],
+                output_dir,
                 "raw_text.csv",
             ),
         }
     )
 
 url_map = pd.DataFrame(url_map)
-url_map.to_csv(config_path + "/url_map.csv", index=False)
+url_map.to_csv(os.path.join(config_path, "url_map.csv"), index=False)
 
 print(url_map)
