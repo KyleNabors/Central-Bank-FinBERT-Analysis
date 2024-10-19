@@ -1,10 +1,7 @@
 import os
 import sys
 
-
 database = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..", "Database"))
-print(database)
-
 
 central_banks = ["fed", "ecb", "boe", "boj", "boa", "boc", "bosweden", "boswiss"]
 

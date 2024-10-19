@@ -131,7 +131,7 @@ def process_chunk(df_chunk):
     lenlist = []
     for i in range(len(df_chunk)):
         date = df_chunk["date"].iloc[i]
-        group = df_chunk["group"].iloc[i]
+        # group = df_chunk["group"].iloc[i]
         segment = df_chunk["segment"].iloc[i]
         segment = segment.replace("\n", " ")
         segment = segment.replace("\r", " ")
@@ -150,7 +150,7 @@ def process_chunk(df_chunk):
                     output.append(
                         {
                             "date": date,
-                            "group": group,
+                            # "group": group,
                             "segment": segment,
                             "length": len(segment),
                             "language": language,
