@@ -77,8 +77,8 @@ for i in range(len(url_map)):
         finbert_url,
         "finbert.csv",
     )
-    df.to_csv(finbert_url, index=False)
-    finbert_urls.append(finbert_url)
+#     df.to_csv(finbert_url, index=False)
+#     finbert_urls.append(finbert_url)
 
-url_map["finbert_url"] = finbert_urls
-url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)
+# url_map["finbert_url"] = finbert_urls
+# url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)
