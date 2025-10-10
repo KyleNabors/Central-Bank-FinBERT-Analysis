@@ -10,21 +10,17 @@ from multiprocessing import Pool, cpu_count
 import spacy
 from langdetect import detect_langs
 
-# Define global variables and functions here
-
 cwd = os.getcwd()
-# Find and import config file
 config_path = os.getcwd()
-
 sys.path.append(config_path)
 import config
 
 database = config.database
-central_banks = config.central_banks
-training_data = os.path.join(database, "Training Data")
-fed_docs = config.fed_docs
-ecb_docs = config.ecb_docs
-boe_docs = config.boe_docs
+
+# --- KEYWORDS AND WEIGHTING ---
+KEYWORDS = ["inflation", "unemployment"]  # Set your keywords here
+BASE_WEIGHT = 1.0
+KEYWORD_WEIGHT = 2.0  # Weight per keyword occurrence
 
 
 def get_chunks(s, maxlength):
@@ -59,12 +55,10 @@ def remove_comma(sentence):
     indices = []
     for i, token in enumerate(doc):
         if token.dep_ == "punct":
-            try:
+            if i + 1 < len(doc):  # Prevent out-of-bounds access
                 next_token = doc[i + 1]
                 if next_token.dep_ == "ROOT" or next_token.dep_ == "conj":
                     indices.append(i)
-            except IndexError:
-                pass
     if not indices:
         return sentence
     else:
@@ -91,42 +85,54 @@ def sentiment_focus(sentence):
         sent_tokens = [token for token in sent]
         for token in sent_tokens:
             if token.lower_ == "although" or token.lower_ == "though":
-                try:
-                    comma_index_back = [
-                        token1.i for token1 in doc[token.i :] if token1.text == ","
-                    ][0]
-                except IndexError:
-                    try:
-                        comma_index_front = [
-                            token1.i for token1 in doc[: token.i] if token1.text == ","
-                        ][-1]
-                    except IndexError:
-                        return str(doc).strip(), focus_changed
-                    focus = doc[:comma_index_front].text
-                    return str(focus).strip(), focus_changed
-                try:
-                    comma_index_front = [
+                comma_back_list = [
+                    token1.i for token1 in doc[token.i :] if token1.text == ","
+                ]
+                if comma_back_list:
+                    comma_index_back = comma_back_list[0]
+                else:
+                    comma_front_list = [
                         token1.i for token1 in doc[: token.i] if token1.text == ","
-                    ][-1]
-                except IndexError:
+                    ]
+                    if comma_front_list:
+                        comma_index_front = comma_front_list[-1]
+                        focus = doc[:comma_index_front].text
+                        return str(focus).strip(), focus_changed
+                    else:
+                        return str(doc).strip(), focus_changed
+                comma_front_list = [
+                    token1.i for token1 in doc[: token.i] if token1.text == ","
+                ]
+                if comma_front_list:
+                    comma_index_front = comma_front_list[-1]
+                else:
                     focus = doc[comma_index_back + 1 :].text
                     return str(focus).strip(), focus_changed
                 focus = doc[:comma_index_front].text + doc[comma_index_back:].text
                 return str(focus).strip(), focus_changed
 
     if doc[0].lower_ == "while":
-        try:
-            comma_index_back1 = [token2.i for token2 in doc if token2.text == ","][0]
-        except IndexError:
+        comma_back_list = [token2.i for token2 in doc if token2.text == ","]
+        if comma_back_list:
+            comma_index_back1 = comma_back_list[0]
+            focus = doc[comma_index_back1 + 1 :].text
+            return str(focus).strip(), focus_changed
+        else:
             return str(doc).strip(), focus_changed
-        focus = doc[comma_index_back1 + 1 :].text
-        return str(focus).strip(), focus_changed
 
     focus_changed = 0
     return str(doc).strip(), focus_changed
 
 
-def process_chunk(df_chunk):
+def keyword_weight(
+    sentence, keywords=KEYWORDS, base_weight=BASE_WEIGHT, keyword_weight=KEYWORD_WEIGHT
+):
+    """Returns weight for a sentence based on keyword occurrences."""
+    count = sum(sentence.lower().count(kw.lower()) for kw in keywords)
+    return base_weight + count * keyword_weight
+
+
+def process_chunk(df_chunk, keywords=KEYWORDS):
     output = []
     lenlist = []
     for i in range(len(df_chunk)):
@@ -146,16 +152,25 @@ def process_chunk(df_chunk):
             for sentence in sentences:
                 if 60 < len(sentence) < 512:
                     words = word_tokenize(sentence)
-                    segment = " ".join(words)
+                    segment_clean = " ".join(words)
+                    weight = keyword_weight(segment_clean, keywords)
                     output.append(
                         {
                             "date": date,
                             # "group": group,
-                            "segment": segment,
-                            "length": len(segment),
+                            "segment": segment_clean,
+                            "length": len(segment_clean),
                             "language": language,
                             "lang_prob": langprob,
                             "doc_len": seglen,
+                            "weight": weight,
+                            "keywords": ", ".join(
+                                [
+                                    kw
+                                    for kw in keywords
+                                    if kw.lower() in segment_clean.lower()
+                                ]
+                            ),
                         }
                     )
     df_result = pd.DataFrame(output)
@@ -181,12 +196,12 @@ def process_chunk(df_chunk):
     return df_result
 
 
-def text_process(df):
+def text_process(df, keywords=KEYWORDS):
     num_processes = cpu_count()
     chunks = np.array_split(df, num_processes)
 
     with Pool(processes=num_processes, initializer=init_worker) as pool:
-        results = pool.map(process_chunk, chunks)
+        results = pool.starmap(process_chunk, [(chunk, keywords) for chunk in chunks])
 
     df_result = pd.concat(results, ignore_index=True)
     return df_result
@@ -197,8 +212,9 @@ if __name__ == "__main__":
     url_map = pd.read_csv(os.path.join(cwd, "url_map.csv"))
 
     processed_urls = []
+    weights_used = []
     for i in range(len(url_map)):
-        url = url_map["url"][i]
+        url = url_map["url"][i] if "url" in url_map.columns else url_map["url_raw"][i]
         df = pd.read_csv(url)
         print(df.columns)
         print(df.dtypes)
@@ -207,10 +223,11 @@ if __name__ == "__main__":
         df = df[df["date"] > "1998-01-01"]
         print(len(df))
         folder = os.path.dirname(url)
-        df = text_process(df)
-        processed_url = os.path.join(folder, "processed_text.csv")
-        df.to_csv(processed_url, index=False)
+        df_processed = text_process(df, keywords=KEYWORDS)
+        processed_url = os.path.join(folder, "processed_text_weighted.csv")
+        df_processed.to_csv(processed_url, index=False)
         processed_urls.append(processed_url)
-
-    url_map["processed_url"] = processed_urls
+        weights_used.append(", ".join(KEYWORDS))
+    url_map["processed_url_weighted"] = processed_urls
+    url_map["keywords_used"] = weights_used
     url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)

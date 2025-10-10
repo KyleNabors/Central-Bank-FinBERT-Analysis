@@ -56,8 +56,16 @@ finbert_urls = []
 for i in range(len(url_map)):
     tqdm.pandas()
     print(url_map["central bank"][i], url_map["document"][i])
-    url = url_map["processed_url"][i]
+    url = url_map["processed_url"][
+        i
+    ]  # For uniform, or use processed_url_weighted for weighted
     df = pd.read_csv(url, low_memory=False)
+    # Pass through weights for analysis
+    if "weight" in df.columns:
+        weights = df["weight"]
+    else:
+        weights = np.ones(len(df))  # Default to 1 if not present
+
     df["sentence_simple"] = np.where(
         df["len"] < 10, df["segment"], df["sentence_simple"]
     )
@@ -66,6 +74,9 @@ for i in range(len(url_map)):
     df["sentiment"] = df["sentiment"].replace(
         {"Positive": 1, "Neutral": 0, "Negative": -1}
     )
+    # Save weights in output for further analysis
+    df["weight"] = weights
+
     finbert_url = os.path.join(
         database,
         "FinBERT Models",
@@ -77,8 +88,8 @@ for i in range(len(url_map)):
         finbert_url,
         "finbert.csv",
     )
-#     df.to_csv(finbert_url, index=False)
-#     finbert_urls.append(finbert_url)
+    df.to_csv(finbert_url, index=False)
+    finbert_urls.append(finbert_url)
 
-# url_map["finbert_url"] = finbert_urls
-# url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)
+url_map["finbert_url"] = finbert_urls
+url_map.to_csv(os.path.join(cwd, "url_map.csv"), index=False)
