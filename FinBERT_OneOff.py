@@ -20,7 +20,7 @@ finbert_fomc = pipeline(
 )
 
 # --- USER INPUT SECTION ---
-excel_path = "sentences.xlsx"  # <-- Change this to your Excel file path
+excel_path = "/Users/kylenabors/Downloads/Sentences.xlsx"  # <-- Change this to your Excel file path
 sheet_name = 0  # or the name of the sheet
 
 # Read sentences from Excel
@@ -37,6 +37,6 @@ df["sentiment_score"] = df["sentiment_label"].replace(
 )
 
 # Save results to Excel
-output_path = "sentences_with_sentiment.xlsx"
+output_path = "/Users/kylenabors/Downloads/sentences_with_sentiment.xlsx"
 df.to_excel(output_path, index=False)
 print(f"Sentiment scores saved to {output_path}")
