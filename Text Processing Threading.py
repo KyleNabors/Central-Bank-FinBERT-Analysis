@@ -5,6 +5,7 @@ from tqdm.auto import tqdm
 from nltk.tokenize import sent_tokenize, word_tokenize
 import numpy as np
 from multiprocessing import Pool, cpu_count
+import re
 
 # Other imports
 import spacy
@@ -18,7 +19,7 @@ import config
 database = config.database
 
 # --- KEYWORDS AND WEIGHTING ---
-KEYWORDS = ["inflation", "unemployment"]  # Set your keywords here
+KEYWORDS = ["inflation", "employment"]  # Set your keywords here
 BASE_WEIGHT = 1.0
 KEYWORD_WEIGHT = 2.0  # Weight per keyword occurrence
 
@@ -128,7 +129,10 @@ def keyword_weight(
     sentence, keywords=KEYWORDS, base_weight=BASE_WEIGHT, keyword_weight=KEYWORD_WEIGHT
 ):
     """Returns weight for a sentence based on keyword occurrences."""
-    count = sum(sentence.lower().count(kw.lower()) for kw in keywords)
+    count = 0
+    for kw in keywords:
+        # Match whole words only
+        count += len(re.findall(rf"\b{re.escape(kw.lower())}\b", sentence.lower()))
     return base_weight + count * keyword_weight
 
 
@@ -150,7 +154,7 @@ def process_chunk(df_chunk, keywords=KEYWORDS):
         for block in blocks:
             sentences = sent_tokenize(block)
             for sentence in sentences:
-                if 60 < len(sentence) < 512:
+                if 50 < len(sentence) < 512:
                     words = word_tokenize(sentence)
                     segment_clean = " ".join(words)
                     weight = keyword_weight(segment_clean, keywords)
@@ -208,7 +212,6 @@ def text_process(df, keywords=KEYWORDS):
 
 
 if __name__ == "__main__":
-    # Main code that uses multiprocessing should go here
     url_map = pd.read_csv(os.path.join(cwd, "url_map.csv"))
 
     processed_urls = []
@@ -224,7 +227,16 @@ if __name__ == "__main__":
         print(len(df))
         folder = os.path.dirname(url)
         df_processed = text_process(df, keywords=KEYWORDS)
-        processed_url = os.path.join(folder, "processed_text_weighted.csv")
+        # Print number and percentage of sentences with weight > 1
+        num_weighted = (df_processed["weight"] > 1).sum()
+        total_sentences = len(df_processed)
+        pct_weighted = (
+            100 * num_weighted / total_sentences if total_sentences > 0 else 0
+        )
+        print(
+            f"File {i+1}/{len(url_map)}: {num_weighted} sentences ({pct_weighted:.2f}%) have weight > 1"
+        )
+        processed_url = os.path.join(folder, "processed_text.csv")
         df_processed.to_csv(processed_url, index=False)
         processed_urls.append(processed_url)
         weights_used.append(", ".join(KEYWORDS))
