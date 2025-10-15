@@ -69,12 +69,13 @@ for i in range(len(url_map)):
     df["sentence_simple"] = np.where(
         df["len"] < 10, df["segment"], df["sentence_simple"]
     )
+
     df["sentiment"] = df["sentence_simple"].progress_apply(lambda x: finbert_fomc(x))
     df["sentiment"] = df["sentiment"].apply(lambda x: x[0]["label"])
     df["sentiment"] = df["sentiment"].replace(
         {"Positive": 1, "Neutral": 0, "Negative": -1}
     )
-    # Save weights in output for further analysis
+
     df["weight"] = weights
 
     finbert_url = os.path.join(
