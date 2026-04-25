@@ -15,16 +15,23 @@ import numpy as np
 INPUT_CSV = "/Users/kylenabors/Documents/Database/Training Data/fed/fed_minutes/meeting_minutes.csv"
 OUTPUT_XLSX = "/Users/kylenabors/Documents/Database/Training Data/fed/fed_minutes/oneoff_sentiment_comparison.xlsx"
 MAX_SENT_LENGTH = 512
-MAX_PUBS = 50  # max number of most recent publications to process
+MAX_PUBS = 100000  # max number of most recent publications to process
 MIN_PROCESSED_LEN = (
-    200  # minimum length (chars) of the processed sentence required to include the row
+    100  # minimum length (chars) of the processed sentence required to include the row
 )
 
 # Device setup (CPU fallback for reliability)
 if torch.cuda.is_available():
     device = 0
+# --- DEVICE SETUP FOR APPLE SILICON (MPS) ---
+if torch.backends.mps.is_available():
+    device = torch.device("mps")
+    _test = torch.ones(1, device=device)
+    print(f"MPS active: {_test}")
 else:
-    device = -1
+    print("MPS device not found. Falling back to CPU.")
+    device = torch.device("cpu")
+
 
 # Seed for reproducibility
 SEED = 0
@@ -35,11 +42,16 @@ torch.manual_seed(SEED)
 # Load FinBERT model and tokenizer
 model = BertForSequenceClassification.from_pretrained(
     "ZiweiChen/FinBERT-FOMC", num_labels=3
-)
-model.eval()  # ensure evaluation mode
+).to(device)
+model.eval()
 tokenizer = BertTokenizer.from_pretrained("ZiweiChen/FinBERT-FOMC")
+
+# Pipeline (HuggingFace now supports torch.device for MPS)
 finbert_fomc = pipeline(
-    "text-classification", model=model, tokenizer=tokenizer, device=device
+    "text-classification",
+    model=model,
+    tokenizer=tokenizer,
+    device=device,  # will use MPS if available, else CPU
 )
 
 # Load spaCy
